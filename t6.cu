@@ -12,7 +12,7 @@ using namespace std;
 __global__ void sigmoid(float *arr, int size)
 {
 	int id = threadIdx.x;
-	if(id < size - 1 && id > 0) 
+	if(id < size && id >= 0) 
 		arr[id] = 1 / (1 + exp(-arr[id]));
 }
 
@@ -36,6 +36,7 @@ private:
 
 	void read_weights(string pathToWeights){
 		float *h_arr = new float [in_size*out_size];
+		float *host_array = new float [in_size*out_size];
 		try{
 			ifstream s(pathToWeights);
 			for (int i = 0; i < in_size*out_size; i++){
@@ -46,9 +47,15 @@ private:
 		catch(exception const& e){
 			cout << "error: " << e.what() << "\n";
 		}
+		for(int i=0;i<in_size;i++){
+			for(int j=0;j<out_size;j++){
+				host_array[i*out_size+j] = h_arr[j*in_size+i];
+			}
+		}
 		cudaMalloc(&weights, out_size * in_size * sizeof(float));
-		cudaMemcpy(weights, h_arr, out_size * in_size * sizeof(float), cudaMemcpyHostToDevice);
+		cudaMemcpy(weights, host_array, out_size * in_size * sizeof(float), cudaMemcpyHostToDevice);
 		delete[] h_arr;
+		delete[] host_array;
 	};
 
 	void read_biases(string pathToWeights){
